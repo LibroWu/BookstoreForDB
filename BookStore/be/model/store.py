@@ -20,12 +20,15 @@ class Store:
 
         self.store_collection = self.db["store"]
         self.store_collection.create_index([("store_id", 1), ("book_id", 1)], unique=True)
+        #self.store_collection.create_index('price', unique=False)
+        #self.store_collection.create_index('title', unique=False)
+        #self.store_collection.create_index('content', unique=False)
 
         self.new_order_collection = self.db["new_order"]
         self.new_order_collection.create_index([("order_id",1),("store_id",1),("user_id",1)], unique=True)
 
         self.new_order_detail_collection = self.db["new_order_detail"]
-        self.new_order_detail_collection.create_index([("order_id", 1), ("book_id", 1),("count",1),("price",1)], unique=True)
+        self.new_order_detail_collection.create_index([("order_id", 1), ("book_id", 1)], unique=True)
 
     def get_db_conn(self):
         return self.db

@@ -1,5 +1,12 @@
 from be.model import store
 
+UNPAID = 0
+PAID = 1
+CANCELED = 2
+SENT = 3
+RECEIVED = 4
+
+ORDER_TIMEOUT = 5
 
 class DBConn:
     def __init__(self):

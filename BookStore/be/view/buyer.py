@@ -40,3 +40,36 @@ def add_funds():
     b = Buyer()
     code, message = b.add_funds(user_id, password, add_value)
     return jsonify({"message": message}), code
+
+@bp_buyer.route("/cancel_order", methods=["POST"])
+def cancel_order():
+    user_id = request.json.get("user_id")
+    order_id = request.json.get("order_id")
+    b = Buyer()
+    code, message = b.cancel_order(user_id, order_id)
+    return jsonify({"message": message}), code
+
+@bp_buyer.route("/search_order", methods=["POST"])
+def search_order():
+    user_id = request.json.get("user_id")
+    b = Buyer()
+    code, message, order_list = b.search_order(user_id)
+    return jsonify({"message": message, 'order_info': order_list}), code
+
+@bp_buyer.route("/search_book", methods=["POST"])
+def search_book():
+    user_id = request.json.get("user_id")
+    search_type = request.json.get("search_type")
+    store_id = request.json.get("store_id")
+    search_params = request.json.get("search_params")
+    b = Buyer()
+    code, message, res = b.search_book(user_id, search_type, store_id, search_params)
+    return jsonify({"message": message, "book_name":res}), code
+
+@bp_buyer.route("/confirm_receive", methods=["POST"])
+def confirm_receive():
+    user_id = request.json.get("user_id")
+    order_id = request.json.get("order_id")
+    b = Buyer()
+    code, message = b.add_funds(user_id, order_id)
+    return jsonify({"message": message}), code

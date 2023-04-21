@@ -3,6 +3,7 @@ import time
 import logging
 from be.model import error
 from be.model import db_conn
+from be.model.db_conn import *
 import pymongo.errors as errors
 # encode a json string like:
 #   {
