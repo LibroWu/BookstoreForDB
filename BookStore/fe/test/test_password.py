@@ -21,15 +21,24 @@ class TestPassword:
 
     def test_ok(self):
         code = self.auth.password(self.user_id, self.old_password, self.new_password)
+        
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** test_ok\n"+ str(code)+'\n')
         assert code == 200
 
         code, new_token = self.auth.login(self.user_id, self.old_password, self.terminal)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** test_ok\n"+ str(code)+'\n')
         assert code != 200
 
         code, new_token = self.auth.login(self.user_id, self.new_password, self.terminal)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** test_ok\n"+ str(code)+'\n')
         assert code == 200
 
         code = self.auth.logout(self.user_id, new_token)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** test_ok\n"+ str(code)+'\n')
         assert code == 200
 
     def test_error_password(self):

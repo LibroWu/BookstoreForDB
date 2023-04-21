@@ -28,6 +28,8 @@ class TestPayment:
         self.buy_book_info_list = gen_book.buy_book_info_list
         assert ok
         b = register_new_buyer(self.buyer_id, self.password)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+                f.write("*** pre run #1\n"+str(self.buyer_id))
         self.buyer = b
         code, self.order_id = b.new_order(self.store_id, buy_book_id_list)
         assert code == 200

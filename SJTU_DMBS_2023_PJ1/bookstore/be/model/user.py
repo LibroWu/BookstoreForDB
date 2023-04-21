@@ -96,7 +96,7 @@ class User(db_conn.DBConn):
 
             token = jwt_encode(user_id, terminal)
             cursor = self.conn.execute(
-                "UPDATE user set token= ? , terminal = ? where user_id = ?",
+                "UPDATE user set token = ? , terminal = ? where user_id = ?",
                 (token, terminal, user_id), )
             if cursor.rowcount == 0:
                 return error.error_authorization_fail() + ("", )
@@ -117,7 +117,7 @@ class User(db_conn.DBConn):
             dummy_token = jwt_encode(user_id, terminal)
 
             cursor = self.conn.execute(
-                "UPDATE user SET token = ?, terminal = ? WHERE user_id=?",
+                "UPDATE user SET token = ? , terminal = ? WHERE user_id=?",
                 (dummy_token, terminal, user_id), )
             if cursor.rowcount == 0:
                 return error.error_authorization_fail()

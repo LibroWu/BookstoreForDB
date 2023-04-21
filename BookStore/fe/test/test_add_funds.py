@@ -13,9 +13,13 @@ class TestAddFunds:
 
     def test_ok(self):
         code = self.buyer.add_funds(1000)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+                f.write("*** test ok\n"+str(code))
         assert code == 200
 
         code = self.buyer.add_funds(-1000)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+                f.write("*** test ok\n"+str(code))
         assert code == 200
 
     def test_error_user_id(self):

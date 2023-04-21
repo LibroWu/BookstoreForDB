@@ -40,6 +40,8 @@ class Auth:
         headers = {"token": token}
         url = urljoin(self.url_prefix, "logout")
         r = requests.post(url, headers=headers, json=json)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** fe auth logout"+ str(r.content)+'\n')
         return r.status_code
 
     def unregister(self, user_id: str, password: str) -> int:

@@ -19,6 +19,6 @@ class DBConn:
 
     def store_id_exist(self, store_id):
         collection = self.conn['user_store']
-        query = {"store_id": store_id}
+        query = {"store_id": store_id} 
         result = collection.find_one(query)
         return result is not None

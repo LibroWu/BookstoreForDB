@@ -30,8 +30,14 @@ class TestNewOrder:
 
     def test_ok(self):
         ok, buy_book_id_list = self.gen_book.gen(non_exist_book_id=False, low_stock_level=False)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** begin test ok" + str(ok))
         assert ok
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** begin test ok")
         code, _ = self.buyer.new_order(self.store_id, buy_book_id_list)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** test ok\n" + str(code))
         assert code == 200
 
     def test_non_exist_user_id(self):

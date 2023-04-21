@@ -19,15 +19,25 @@ class TestLogin:
 
     def test_ok(self):
         code, token = self.auth.login(self.user_id, self.password, self.terminal)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** start test_ok" + str(code)+ '\n')
+    
         assert code == 200
 
         code = self.auth.logout(self.user_id + "_x", token)
+        
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** start test_ok" + str(code)+ '\n')
         assert code == 401
 
         code = self.auth.logout(self.user_id, token + "_x")
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** start test_ok" + str(code)+ '\n')
         assert code == 401
 
         code = self.auth.logout(self.user_id, token)
+        with open('/mnt/e/大三下/DB/BookstoreForDB/BookStore/log/out.txt','a') as f:
+            f.write("*** start test_ok" + str(code)+ '\n')
         assert code == 200
 
     def test_error_user_id(self):

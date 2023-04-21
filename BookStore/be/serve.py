@@ -10,12 +10,18 @@ from be.model.store import init_database
 
 bp_shutdown = Blueprint("shutdown", __name__)
 
-
+'''
+def shutdown_server():
+    if request.environ.get('werkzeug.server.shutdown') is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    os.kill(os.getpid(), 9)
+'''
 def shutdown_server():
     func = request.environ.get("werkzeug.server.shutdown")
     if func is None:
         raise RuntimeError("Not running with the Werkzeug Server")
     func()
+
 
 
 @bp_shutdown.route("/shutdown")
@@ -43,4 +49,5 @@ def be_run():
     app.register_blueprint(auth.bp_auth)
     app.register_blueprint(seller.bp_seller)
     app.register_blueprint(buyer.bp_buyer)
+    
     app.run()

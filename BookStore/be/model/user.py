@@ -3,7 +3,7 @@ import time
 import logging
 from be.model import error
 from be.model import db_conn
-
+import pymongo.errors as errors
 # encode a json string like:
 #   {
 #       "user_id": [user name],
@@ -37,7 +37,20 @@ class User(db_conn.DBConn):
 
     def __init__(self):
         db_conn.DBConn.__init__(self)
-
+    def __check_token(self, user_id, db_token, token) -> bool:
+        try:
+            if db_token != token:
+                return False
+            jwt_text = jwt_decode(encoded_token=token, user_id=user_id)
+            ts = jwt_text["timestamp"]
+            if ts is not None:
+                now = time.time()
+                if self.token_lifetime > now - ts >= 0:
+                    return True
+        except jwt.exceptions.InvalidSignatureError as e:
+            logging.error(str(e))
+            return False
+        
     def register(self, user_id: str, password: str):
         try:
             terminal = "terminal_{}".format(str(time.time()))
@@ -62,7 +75,8 @@ class User(db_conn.DBConn):
         if user is None:
             return error.error_authorization_fail()
         db_token = user.get("token")
-        if not self.__check_token(user_id, db_token, token):
+        res = self.__check_token(user_id, db_token, token)
+        if not res:
             return error.error_authorization_fail()
         return 200, "ok"
 
@@ -92,16 +106,14 @@ class User(db_conn.DBConn):
             code, message = self.check_token(user_id, token)
             if code != 200:
                 return code, message
-
             terminal = "terminal_{}".format(str(time.time()))
             dummy_token = jwt_encode(user_id, terminal)
-
             result = self.conn["user"].update_one({"user_id": user_id}, {"$set": {"token": dummy_token, "terminal": terminal}})
             if result.modified_count == 0:
                 return error.error_authorization_fail() + ("", )
         except Exception as e:
             return 503, str(e), ""
-        return 200, "ok", token
+        return 200, "ok"
 
     def unregister(self, user_id: str, password: str) -> (int, str):
         try:
@@ -128,7 +140,7 @@ class User(db_conn.DBConn):
 
             terminal = "terminal_{}".format(str(time.time()))
             token = jwt_encode(user_id, terminal)
-            result = self.db.collection.update_one({"user_id": user_id, "password": old_password},
+            result = self.conn['user'].update_one({"user_id": user_id, "password": old_password},
                                                     {"$set": {"password": new_password, "token": token, "terminal": terminal}})
             if result.modified_count == 0:
                 return error.error_authorization_fail()
