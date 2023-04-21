@@ -20,7 +20,7 @@ class Buyer:
             "user_id": self.user_id,
             "order_id":order_id,
         }
-        url = urljoin(self.url_prefix,"confirm_send")
+        url = urljoin(self.url_prefix,"confirm_receive")
         headers = {"token":self.token}
         r = requests.post(url,headers=headers,json=json)
         return r.status_code
@@ -33,20 +33,30 @@ class Buyer:
             "store_id": store_id,
             "search_params":search_params
         }
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #in access search book {}\n".format(""))
         url = urljoin(self.url_prefix,"search_book")
         headers = {"token":self.token}
         r = requests.post(url,headers=headers,json=json)
         response_json = r.json()
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #in access search book #1 {}\n".format(r.status_code))
         return r.status_code, response_json.get("book_name")
     
     def search_order(self):
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #4441 {} \n".format("")) 
         json = {
             "user_id": self.user_id,
         }
         url = urljoin(self.url_prefix,"search_order")
         headers = {"token":self.token}
         r = requests.post(url,headers=headers,json=json)
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #4442 {} \n".format(r)) 
         response_json = r.json()
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #4443 {} \n".format(response_json.get("order_info"))) 
         return r.status_code, response_json.get("order_info")
     
     def cancel_order(self,order_id:str):

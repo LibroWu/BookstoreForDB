@@ -9,6 +9,7 @@ from be.model.db_conn import *
 class Buyer(DBConn):
     def __init__(self):
         DBConn.__init__(self)
+        self.last_clear_time = 0 #int(time.time())
 
     def new_order(self, user_id: str, store_id: str, id_and_count: [(str, int)]) -> (int, str, str):
         order_id = ""
@@ -17,8 +18,11 @@ class Buyer(DBConn):
                 return error.error_non_exist_user_id(user_id) + (order_id, )
             if not self.store_id_exist(store_id):
                 return error.error_non_exist_store_id(store_id) + (order_id, )
+            self.__clear_unpaid_orders()
             uid = "{}_{}_{}".format(user_id, store_id, str(uuid.uuid1()))
             for book_id, count in id_and_count:
+                with open("./log/out.txt",'a') as f:
+                    f.write("*** #bravo ### {}, {}, {} \n".format(time.time(), count, book_id))
                 collection = self.conn['store']
                 query = {"store_id": store_id, "book_id": book_id}
                 result = collection.find_one(query)
@@ -30,6 +34,9 @@ class Buyer(DBConn):
                 #price = book_info_json.get("price")
                 price = result['price']
                 if stock_level < count:
+                    with open("./log/out.txt",'a') as f:
+                        f.write("*** #bravo ### {}, {}, {} \n".format(stock_level, count, book_id))
+            
                     return error.error_stock_level_low(book_id) + (order_id,)
                 res_update = collection.update_many(
                     {"store_id": store_id, "book_id": book_id, "stock_level": {"$gte": count}},
@@ -54,6 +61,14 @@ class Buyer(DBConn):
                 "state": UNPAID,
                 "timestamp": int(time.time())
             })
+            
+            collection = self.conn['unpaid_order']
+            collection.insert_one({
+                "order_id": uid,
+                "store_id": store_id,
+                "user_id": user_id,
+                "timestamp": int(time.time())
+            })
             order_id = uid
         except pymongo.errors.PyMongoError as e:
             logging.info("528, {}".format(str(e)))
@@ -63,6 +78,28 @@ class Buyer(DBConn):
             return 530, "{}".format(str(e)), ""
         return 200, "ok", order_id
 
+    def __clear_unpaid_orders(self):
+        now = int(time.time())
+        if  now - self.last_clear_time > int(ORDER_TIMEOUT/2):
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #xxx {}\n".format(now))
+            collection = self.conn['unpaid_order']
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #xxx1 {}\n".format(self.last_clear_time))
+            mul_order = collection.find({'timestamp': {'$lt': now-ORDER_TIMEOUT}})
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #xxx2 {}\n".format(""))
+            for order in mul_order:
+                with open("./log/out.txt",'a') as f:
+                    f.write("*** #xxx3 {}\n".format(""))
+                collection.delete_many({'order_id': order['order_id']})
+                with open("./log/out.txt",'a') as f:
+                    f.write("*** #xxx4 {}\n".format(""))
+                self.__cancel_and_restore_stock(order['order_id'], order)
+                with open("./log/out.txt",'a') as f:
+                    f.write("*** #xxx5 {}\n".format(""))
+            self.last_clear_time = int(time.time())
+
     def payment(self, user_id: str, password: str, order_id: str) -> (int, str):
         try:
             orders = self.conn["new_order"]
@@ -71,6 +108,7 @@ class Buyer(DBConn):
                 return error.error_invalid_order_id(order_id)
             if order['state']!=UNPAID:
                 return error.error_invalid_order_state(order_id)
+            self.__clear_unpaid_orders()
             buyer_id = order["user_id"]
             store_id = order["store_id"]
 
@@ -156,22 +194,42 @@ class Buyer(DBConn):
         order_details = self.conn["new_order_detail"]
         collection = self.conn['store']
         for detail in order_details.find({"order_id": order_id}):
+            
+            book = collection.find_one({"store_id": order["store_id"], "book_id": detail["book_id"]})
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #bravo {},{}, {}, {} \n".format(book["stock_level"], detail["count"], order["store_id"], detail["book_id"]))
+
             collection.update_many(
                 {"store_id": order["store_id"], "book_id": detail["book_id"]},
                 {"$inc": {"stock_level": detail["count"]}}
             )
 
+            book = collection.find_one({"store_id": order["store_id"], "book_id": detail["book_id"]})
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #bravo {} \n".format(book["stock_level"]))
+            
+
     def confirm_receive(self, user_id, order_id) -> (int, str):
         try:
+            with open("./log/out.txt",'a') as f:
+                f.write("*** rc0 {} \n")
             if not self.user_id_exist(user_id):
                 return error.error_non_exist_user_id(user_id)
+            with open("./log/out.txt",'a') as f:
+                f.write("*** rc1 {} \n")
             orders = self.conn["new_order"]
             order = orders.find_one({"order_id": order_id, 'user_id':user_id})
+            with open("./log/out.txt",'a') as f:
+                f.write("*** rc2 {} \n")
             if order == None:
                 return error.error_invalid_order_id(order)
             if order["state"] != SENT:
                 return error.error_invalid_order_state(order_id)
+            with open("./log/out.txt",'a') as f:
+                f.write("*** rc3 {} \n")
             orders.update_one({"order_id": order_id}, {"$set": {"state": RECEIVED}})
+            with open("./log/out.txt",'a') as f:
+                f.write("*** rc4 {} \n")
         except pymongo.errors.PyMongoError as e:
             logging.info("528, {}".format(str(e)))
             return 528, "{}".format(str(e)), ""
@@ -185,12 +243,13 @@ class Buyer(DBConn):
             if not self.user_id_exist(user_id):
                 return error.error_non_exist_user_id(user_id)
             orders = self.conn["new_order"]
-            order = orders.find_one({"order_id": order_id, 'user_id':user_id})
-            if order == None:
-                return error.error_invalid_order_id(order)
-            if order["state"] != UNPAID:
-                return error.error_invalid_order_state(order_id)
-            self.__cancel_and_restore_stock(order_id, order)
+            mul_order = orders.find({"order_id": order_id, 'user_id':user_id})
+            for order in mul_order:
+                with open("./log/out.txt",'a') as f:
+                    f.write("*** #711111 {} \n".format(order['state']))
+                if order["state"] != UNPAID:
+                    return error.error_invalid_order_state(order_id)
+                self.__cancel_and_restore_stock(order_id, order)
             
         except pymongo.errors.PyMongoError as e:
             logging.info("528, {}".format(str(e)))
@@ -204,13 +263,22 @@ class Buyer(DBConn):
         try:
             if not self.user_id_exist(user_id):
                 return error.error_non_exist_user_id(user_id)
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #4s441 {} \n".format("")) 
             orders = self.conn["new_order"]
             research_list = orders.find({'user_id':user_id})
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #4s442 {} \n".format("")) 
+            res = []
             for order in research_list:
+                with open("./log/out.txt",'a') as f:
+                    f.write("*** #4s442 {} \n".format(""))
                 if order['state']==UNPAID and (int(time.time())-order['timestamp']>ORDER_TIMEOUT):
                     self.__cancel_and_restore_stock(order['order_id'],order)
                     order['state'] = CANCELED
-            res = [(order['order_id'], order['state']) for order in orders]
+                res.append([order['order_id'],order['state']])
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #4s444 {} \n".format(len(res))) 
         except pymongo.errors.PyMongoError as e:
             logging.info("528, {}".format(str(e)))
             return 528, "{}".format(str(e)), ""
@@ -222,26 +290,35 @@ class Buyer(DBConn):
     # search_params: [ #title, #tag, #content, #price_lower_bound, #price_upper_bound]
     def search_book(self, user_id, search_type, store_id, search_params):
         try:
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #in search book {}\n".format(""))
             if not self.user_id_exist(user_id):
                 return error.error_non_exist_user_id(user_id)
             books = self.conn["store"]
             condition = []
             if search_params[0]!=None:
-                condition.append({'title':"*"+search_params[0]+"*"})
+                condition.append({'title': {"$regex":f'.*{search_params[0]}.*'}})
+                #condition.append({'title': search_params[0]})
             if search_params[1]!=None:
                 condition.append({'tag': {"$in": search_params[1].split(',')}})
             if search_params[2]!=None:
-                condition.append({'content':"*"+search_params[2]+"*"})
+                condition.append({'content':{"$regex":".*"+search_params[2]+".*"}})
             if search_params[3]!=None:
-                condition.append({'tag': {"$in": [search_params[3],search_params[4]]}})
+                #condition.append({'price': {"$in": [search_params[3],search_params[4]]}})
+                condition.append({'price': {"$in": {'$gte': search_params[3], '$lte': search_params[4]}}})
             if search_type==0:
                 condition = {'$and':condition}
+                #condition = condition[0]
+                with open("./log/out.txt",'a') as f:
+                    f.write("*** #in search book final {}\n".format( condition))
                 search_list = books.find(condition)
             else:
                 condition.append({'store_id':store_id})
                 condition = {'$and':condition}
                 search_list = books.find(condition)
-            search_list = {item['title'] for item in search_list}
+            search_list = [item['title'] for item in search_list]
+            with open("./log/out.txt",'a') as f:
+                f.write("*** #in search book final {},{}\n".format(len(search_list), condition))
         except pymongo.errors.PyMongoError as e:
             logging.info("528, {}".format(str(e)))
             return 528, "{}".format(str(e)), ""

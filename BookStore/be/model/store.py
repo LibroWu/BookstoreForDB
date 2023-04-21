@@ -30,6 +30,10 @@ class Store:
         self.new_order_detail_collection = self.db["new_order_detail"]
         self.new_order_detail_collection.create_index([("order_id", 1), ("book_id", 1)], unique=True)
 
+        self.new_order_detail_collection = self.db["unpaid_order"]
+        self.new_order_collection.create_index([("order_id",1), ("timestamp",1)], unique=True)
+
+
     def get_db_conn(self):
         return self.db
 

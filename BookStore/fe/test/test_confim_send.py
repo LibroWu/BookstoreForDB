@@ -30,7 +30,7 @@ class TestConfirmSend:
         ok, buy_book_id_list = gen_book.gen(non_exist_book_id=False, low_stock_level=False, max_book_count=5)
         self.buy_book_info_list = gen_book.buy_book_info_list
         assert ok
-        s = register_new_seller(self.seller_id,self.password)
+        s = gen_book.get_seller()
         self.seller = s
         b = register_new_buyer(self.buyer_id, self.password)
         self.buyer = b
@@ -47,7 +47,14 @@ class TestConfirmSend:
         yield
 
     def test_ok(self):
+        code = self.buyer.add_funds(self.total_price)
+        
+        assert code == 200
+        code = self.buyer.payment(self.order_id)
+        
+        assert code == 200
         code = self.seller.confirm_send(self.order_id)
+        
         assert code == 200
 
     def test_order_not_exist(self):

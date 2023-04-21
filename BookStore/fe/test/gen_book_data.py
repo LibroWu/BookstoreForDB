@@ -17,7 +17,10 @@ class GenBook:
         self.buy_book_info_list = []
         self.buy_book_id_list = []
 
-    def gen(self, non_exist_book_id: bool, low_stock_level, max_book_count: int = 100) -> (bool, []):
+    def get_seller(self):
+        return self.seller
+
+    def gen(self, non_exist_book_id: bool, low_stock_level, max_book_count: int = 100, buy_all = True) -> (bool, []):
         self.__init_book_list__()
         ok = True
         book_db = book.BookDB()
@@ -55,5 +58,5 @@ class GenBook:
             self.buy_book_info_list.append((bk, buy_num))
 
         for item in self.buy_book_info_list:
-            self.buy_book_id_list.append((item[0].id, item[1]))
+            self.buy_book_id_list.append((item[0].id, item[1] if buy_all else 1))
         return ok, self.buy_book_id_list
