@@ -41,6 +41,8 @@ class Buyer:
         response_json = r.json()
         with open("./log/out.txt",'a') as f:
             f.write("*** #in access search book #1 {}\n".format(r.status_code))
+            f.write(str(response_json)+"\n")
+
         return r.status_code, response_json.get("book_name")
     
     def search_order(self):

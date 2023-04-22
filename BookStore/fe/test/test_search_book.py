@@ -22,6 +22,9 @@ class TestSearchBook:
         assert code == 200
         book_db = book.BookDB()
         self.books = book_db.get_book_info(0, 2)
+        with open("./log/out.txt",'a') as f:
+            f.write("*** into initialization... ")
+        # code = self.seller.add_book(self.store_id, 0, b)
         for b in self.books:
             with open("./log/out.txt",'a') as f:
                 f.write("*** # add book {}, {}\n".format(b.title, b.price))
@@ -31,20 +34,43 @@ class TestSearchBook:
         # do after test
 
     def test_ok(self):
+        with open("./log/out.txt",'a') as f:
+            f.write("b.books: \n")
+            for b in self.books:
+                f.write(str(b))
+            f.write("b.books: \n")
+
+
+
         ### Whole Site Search
         for b in self.books:
-            code, books = self.buyer.search_book(0,None,[b.title,None,None,None,10000])
+            code, books = self.buyer.search_book(1,self.store_id,[None,None,None,None,10000])
             with open("./log/out.txt",'a') as f:
                 f.write("*** #test ok #1 {},{}\n".format(code,b.title))
+                if b.title in books:
+                    f.write("site trap in!\n")
+                else:
+                    f.write("trap failed!\n")
+                f.write("start assertion\n")
+
             assert code == 200 and b.title in books
+        with open("./log/out.txt",'a') as f:
+            f.write("*** after whole site search... ")
         ### Store Search
+
         for b in self.books:
             code, books = self.buyer.search_book(1,self.store_id,[b.title,None,None,None,1000000])
             with open("./log/out.txt",'a') as f:
-                f.write("*** #test ok #2 {}\n".format(code))
+                f.write("*** #test ok #1 {},{}\n".format(code,b.title))
+                if b.title in books:
+                    f.write("trap in!\n") 
+                else:
+                    f.write("trap failed!\n")
+                f.write("start assertion 2\n")
             assert code == 200 and b.title in books
 
     def test_error_non_exist_store_id(self):
+        assert False
         for b in self.books:
             # non exist store id
             code = self.buyer.search_book(self,1,self.seller_id+"_x",[b.title,None,None,None,1000000])
@@ -53,6 +79,7 @@ class TestSearchBook:
             assert code == 513
 
     def test_error_non_exist_book_id(self):
+        assert False
         code = self.buyer.search_book(self,0,None,["..........."])
         with open("./log/out.txt",'a') as f:
             f.write("*** #test book id {}\n".format(code))
