@@ -1,0 +1,107 @@
+import requests
+import simplejson
+from urllib.parse import urljoin
+from fe.access.auth import Auth
+
+
+class Buyer:
+    def __init__(self, url_prefix, user_id, password):
+        self.url_prefix = urljoin(url_prefix, "buyer/")
+        self.user_id = user_id
+        self.password = password
+        self.token = ""
+        self.terminal = "my terminal"
+        self.auth = Auth(url_prefix)
+        code, self.token = self.auth.login(self.user_id, self.password, self.terminal)
+        assert code == 200
+
+    def confirm_receive(self,order_id:str):
+        json = {
+            "user_id": self.user_id,
+            "order_id":order_id,
+        }
+        url = urljoin(self.url_prefix,"confirm_receive")
+        headers = {"token":self.token}
+        r = requests.post(url,headers=headers,json=json)
+        return r.status_code
+    
+    
+    def search_book(self,search_type:int,store_id:str,search_params:list):
+        json = {
+            "user_id": self.user_id,
+            "search_type":search_type,
+            "store_id": store_id,
+            "search_params":search_params
+        }
+        with open("./log/out.txt",'a') as f:
+            f.write("Access: tampering store id:"+store_id+"\n");
+        url = urljoin(self.url_prefix,"search_book")
+        headers = {"token":self.token}
+        r = requests.post(url,headers=headers,json=json)
+        response_json = r.json()
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #in access search book #1 {}\n".format(r.status_code))
+            f.write(str(response_json)+"\n")
+
+        return r.status_code, response_json.get("book_name")
+    
+    def search_order(self):
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #4441 {} \n".format("")) 
+        json = {
+            "user_id": self.user_id,
+        }
+        url = urljoin(self.url_prefix,"search_order")
+        headers = {"token":self.token}
+        r = requests.post(url,headers=headers,json=json)
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #4442 {} \n".format(r)) 
+        response_json = r.json()
+        with open("./log/out.txt",'a') as f:
+            f.write("*** #4443 {} \n".format(response_json.get("order_info"))) 
+        return r.status_code, response_json.get("order_info")
+    
+    def cancel_order(self,order_id:str):
+        json = {
+            "user_id": self.user_id,
+            "order_id":order_id,
+        }
+        url = urljoin(self.url_prefix,"cancel_order")
+        headers = {"token":self.token}
+        r = requests.post(url,headers=headers,json=json)
+        return r.status_code
+
+
+    def new_order(self, store_id: str, book_id_and_count: [(str, int)]) -> (int, str):
+        books = []
+        for id_count_pair in book_id_and_count:
+            books.append({"id": id_count_pair[0], "count": id_count_pair[1]})
+        json = {"user_id": self.user_id, "store_id": store_id, "books": books}
+        #print(simplejson.dumps(json))
+        url = urljoin(self.url_prefix, "new_order")
+        headers = {"token": self.token}
+        r = requests.post(url, headers=headers, json=json)
+        response_json = r.json()
+        return r.status_code, response_json.get("order_id")
+
+    def confirm_order(self, store_id: str, order_id: str) -> (int, str):
+        json = {"user_id": self.user_id, "store_id": store_id, "order_id": order_id}
+        url = urljoin(self.url_prefix, "confirm_order")
+        headers = {"token": self.token}
+        r = requests.post(url, headers=headers, json=json)
+        response_json = r.json()
+        return r.status_code, response_json.get("order_id")
+
+    def payment(self,  order_id: str):
+        json = {"user_id": self.user_id, "password": self.password, "order_id": order_id}
+        url = urljoin(self.url_prefix, "payment")
+        headers = {"token": self.token}
+        r = requests.post(url, headers=headers, json=json)
+        return r.status_code
+
+    def add_funds(self, add_value: str) -> int:
+        json = {"user_id": self.user_id, "password": self.password, "add_value": add_value}
+        url = urljoin(self.url_prefix, "add_funds")
+        headers = {"token": self.token}
+        r = requests.post(url, headers=headers, json=json)
+        return r.status_code

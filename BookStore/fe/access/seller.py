@@ -13,6 +13,19 @@ class Seller:
         self.auth = Auth(url_prefix)
         code, self.token = self.auth.login(self.seller_id, self.password, self.terminal)
         assert code == 200
+        
+        
+    def confirm_send(self,order_id: str):
+        json = {
+            "user_id": self.seller_id,
+            "order_id":order_id,
+        }
+        url = urljoin(self.url_prefix,"confirm_send")
+        headers = {"token":self.token}
+        r = requests.post(url,headers=headers,json=json)
+        return r.status_code
+    
+    
 
     def create_store(self, store_id):
         json = {

@@ -1,6 +1,47 @@
+## !确认发货
+
+根据order更新发货书以及Order状态以及库存
+
+### URL
+
+POST http://[address]/seller/confirm_send
+
+### Request
+
+Headers:
+
+| key   | 类型   | 描述               | 是否可为空 |
+| ----- | ------ | ------------------ | ---------- |
+| token | string | 登录产生的会话标识 | N          |
+
+Body:
+
+```json
+{
+  "user_id": "$seller id$",
+  "order_id": "$order id$"
+}
+```
+
+| key      | 类型   | 描述       | 是否可为空 |
+| -------- | ------ | ---------- | ---------- |
+| user_id  | string | 卖家用户ID | N          |
+| order_id | string | 订单ID     | N          |
+
+#### Response
+
+Status Code:
+
+| 码   | 描述          |
+| ---- | ------------- |
+| 200  | 创建商铺成功  |
+|      |               |
+| 520  | Order状态错误 |
+| 511  | 用户ID不存在  |
+
+
+
 ## 创建商铺
-
-
 
 #### URL
 
